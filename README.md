@@ -1,3 +1,4 @@
+Please cite following the paper if you use these codes
 # Multi-Source Deep Domain Adaptation with Weak Supervision for Time-Series Sensor Data
 
 Domain adaptation (DA) offers a valuable means to reuse data and models for new
