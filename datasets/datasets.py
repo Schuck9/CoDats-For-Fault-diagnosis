@@ -443,28 +443,43 @@ class Dataset:
 #2020 11.15 16:50 add cwru datasets
 @register_dataset("cwru")
 class cwru_data(Dataset):
-    users = one_to_n(30)
-    num_classes = 16
+    users = ["12DriveEndFault","12FanEndFault","48DriveEndFault"]
+    num_classes = 14
     feature_names = [
         "ch1"
     ]
     class_labels =['0.007-Ball',
-                '0.007-InnerRace',
-                '0.007-OuterRace12',
-                '0.007-OuterRace3',
-                '0.007-OuterRace6',
-                '0.014-Ball',
-                '0.014-InnerRace',
-                '0.014-OuterRace6',
-                '0.021-Ball',
-                '0.021-InnerRace',
-                '0.021-OuterRace12',
-                '0.021-OuterRace3',
-                '0.021-OuterRace6',
-                '0.028-Ball',
-                '0.028-InnerRace',
-                'Normal'
+            '0.007-InnerRace',
+            '0.007-OuterRace12',
+            '0.007-OuterRace3',
+            '0.007-OuterRace6',
+            '0.014-Ball',
+            '0.014-InnerRace',
+            '0.014-OuterRace6',
+            '0.021-Ball',
+            '0.021-InnerRace',
+            '0.021-OuterRace12',
+            '0.021-OuterRace3',
+            '0.021-OuterRace6',
+            'Normal'
     ]
+    # class_labels =['0.007-Ball',
+    #             '0.007-InnerRace',
+    #             '0.007-OuterRace12',
+    #             '0.007-OuterRace3',
+    #             '0.007-OuterRace6',
+    #             '0.014-Ball',
+    #             '0.014-InnerRace',
+    #             '0.014-OuterRace6',
+    #             '0.021-Ball',
+    #             '0.021-InnerRace',
+    #             '0.021-OuterRace12',
+    #             '0.021-OuterRace3',
+    #             '0.021-OuterRace6',
+    #             '0.028-Ball',
+    #             '0.028-InnerRace',
+    #             'Normal'
+    # ]
     window_size = 30
     window_overlap = False
     # users = one_to_n(30)  # 30 people
