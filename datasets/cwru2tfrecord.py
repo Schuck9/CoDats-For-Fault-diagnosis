@@ -124,6 +124,122 @@ def cwru_load(data_catogories):
 
         return   X_train,   y_train,    X_valid,   y_valid,  X_test,   y_test
 
+def class_name(original_dataset):
+        class_labels =[]
+        if original_dataset == "12DriveEndFault":
+            class_labels =['0.007-Ball',
+                '0.007-InnerRace',
+                '0.007-OuterRace12',
+                '0.007-OuterRace3',
+                '0.007-OuterRace6',
+                '0.014-Ball',
+                '0.014-InnerRace',
+                '0.014-OuterRace6',
+                '0.021-Ball',
+                '0.021-InnerRace',
+                '0.021-OuterRace12',
+                '0.021-OuterRace3',
+                '0.021-OuterRace6',
+                '0.028-Ball',
+                '0.028-InnerRace',
+                'Normal'
+             ]
+        else:
+        # 0.007:  [0,4]
+        # 0.014: [5,7]
+        # 0.021:[8,12]
+        # Normal:13
+            class_labels =['0.007-Ball',
+                    '0.007-InnerRace',
+                    '0.007-OuterRace12',
+                    '0.007-OuterRace3',
+                    '0.007-OuterRace6',
+                    '0.014-Ball',
+                    '0.014-InnerRace',
+                    '0.014-OuterRace6',
+                    '0.021-Ball',
+                    '0.021-InnerRace',
+                    '0.021-OuterRace12',
+                    '0.021-OuterRace3',
+                    '0.021-OuterRace6',
+                    'Normal'
+            ]
+        return class_labels
+def subdataset_split(original_dataset =None, feature = "Radius"):
+        output_dir = os.path.join("datasets", "tfrecords")
+        subdataset = ["12DriveEndFault_0.007","12DriveEndFault_0.014","12DriveEndFault_0.021",
+                            "12FanEndFault_0.007","12FanEndFault_0.014","12FanEndFault_0.021",
+                            "48DriveEndFault_0.007","48DriveEndFault_0.014","48DriveEndFault_0.021",
+        ]
+        Feature_name = { "Hz": ["12","48"], "End":["Drive","Fan"],"Radius":["0.007","0.014","0.021"] } 
+        Transfer_dataset = ["12DriveEndFault","12FanEndFault","48DriveEndFault"]
+        class_labels= []
+        # 0.007:  [0,4]  n = 5
+        # 0.014: [5,7]  n = 3
+        # 0.021:[8,12] n = 4
+        # 0.028: [13:14] n = 2
+        # Normal:15 n = 1
+        for Dataset_name in Transfer_dataset:
+            _cwru= CWRU(Dataset_name, '1797', 384)
+            X_train = np.array( _cwru.X_train,dtype=np.float32)
+            X_test = np.array( _cwru.X_test,dtype=np.float32)
+            y_train = np.array(_cwru.y_train)
+            y_test = np.array(_cwru.y_test)
+         
+
+
+
+
+            for atrr in Feature_name[feature]:
+                subdataset_name = "cwru_"+Dataset_name+"_"+atrr
+                train_filename = os.path.join(output_dir, tfrecord_filename(subdataset_name, "train"))
+                valid_filename = os.path.join(output_dir, tfrecord_filename(subdataset_name, "valid"))
+                test_filename = os.path.join(output_dir,tfrecord_filename(subdataset_name, "test"))
+                atrr = float(atrr)
+                if atrr == 0.007:
+                    subdataset_X_train = X_train[ np.where( y_train< 5)]
+                    subdataset_y_train = y_train[np.where( y_train< 5) ]
+                    subdataset_X_test = X_train[ np.where( y_test< 5)]
+                    subdataset_y_test = y_train[np.where( y_test< 5) ]
+                elif atrr == 0.0014:
+                    subdataset_X_train = X_train[ np.where( (y_train<=7) & (y_train>=5) )]
+                    subdataset_y_train = y_train[ np.where( (y_train<=7) & (y_train>=5) ) ]
+                    subdataset_X_test = X_train[  np.where( (y_train<=7) & (y_train>=5))]
+                    subdataset_y_test = y_train[ np.where( (y_train<=7) & (y_train>=5)) ]
+                elif atrr == 0.021:
+                    subdataset_X_train = X_train[ np.where( (y_train<=12)& (y_train>=8))]
+                    subdataset_y_train = y_train[ np.where( (y_train<=12 ) & ( y_train>=8))]
+                    subdataset_X_test = X_train[ np.where((y_train<=12 ) & ( y_train>=8))]
+                    subdataset_y_test = y_train[ np.where( (y_train<=12 ) & ( y_train>=8))]       
+                
+                subdataset_X_valid, subdataset_y_valid, subdataset_X_train,  subdataset_y_train = valid_split(subdataset_X_train, subdataset_y_train)
+                normalization = datasets.calc_normalization(subdataset_X_train, "minmax")
+                subdataset_X_train_shape =subdataset_X_train.shape
+                subdataset_X_test_shape =  subdataset_X_test.shape
+                subdataset_X_valid_shape = subdataset_X_valid.shape
+
+                # Apply the normalization to the training, validation, and testing data
+                subdataset_X_train = datasets.apply_normalization(subdataset_X_train, normalization)
+                subdataset_X_valid = datasets.apply_normalization(subdataset_X_valid, normalization)
+                subdataset_X_test = datasets.apply_normalization(subdataset_X_test, normalization)
+
+                subdataset_X_train = np.reshape(  subdataset_X_train,(subdataset_X_train_shape[0],subdataset_X_train_shape[1],1))
+                subdataset_X_valid = np.reshape(  subdataset_X_valid,(subdataset_X_valid_shape[0],subdataset_X_valid_shape[1],1))
+                subdataset_X_test = np.reshape(  subdataset_X_test,(subdataset_X_test_shape[0],subdataset_X_test_shape[1],1))
+                subdataset_y_train = np.squeeze(np.array( subdataset_y_train, dtype=np.float32))
+                subdataset_y_valid = np.squeeze(np.array( subdataset_y_valid, dtype=np.float32))
+                subdataset_y_test = np.squeeze(np.array( subdataset_y_test, dtype=np.float32))
+
+                # else:
+                #     test_data = dataset.test_data
+
+                # Saving
+                write(train_filename, subdataset_X_train, subdataset_y_train)
+                write(valid_filename, subdataset_X_valid, subdataset_y_valid)
+                write(test_filename, subdataset_X_test, subdataset_y_test)            
+        
+        return
+
 
 def save_dataset(dataset_name, output_dir, seed=0):
     
@@ -136,10 +252,10 @@ def save_dataset(dataset_name, output_dir, seed=0):
         tfrecord_filename(dataset_name, "test"))
 
     # Skip if they already exist
-    if os.path.exists(train_filename) \
-            and os.path.exists(valid_filename) \
-            and os.path.exists(test_filename):
-        return
+    # if os.path.exists(train_filename) \
+    #         and os.path.exists(valid_filename) \
+    #         and os.path.exists(test_filename):
+    #     return
 
     print("Saving dataset", dataset_name)
 
@@ -154,12 +270,12 @@ def save_dataset(dataset_name, output_dir, seed=0):
 
     # # Calculate normalization only on the training data
     # if not already_normalized:
-    #     normalization = datasets.calc_normalization(train_data, FLAGS.normalize)
+    normalization = datasets.calc_normalization(train_data, "minmax")
 
-    #     # Apply the normalization to the training, validation, and testing data
-    #     train_data = datasets.apply_normalization(train_data, normalization)
-    #     valid_data = datasets.apply_normalization(valid_data, normalization)
-    #     test_data = datasets.apply_normalization(dataset.test_data, normalization)
+    # Apply the normalization to the training, validation, and testing data
+    train_data = datasets.apply_normalization(train_data, normalization)
+    valid_data = datasets.apply_normalization(valid_data, normalization)
+    test_data = datasets.apply_normalization(test_data, normalization)
     # else:
     #     test_data = dataset.test_data
 
@@ -192,4 +308,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    subdataset_split()

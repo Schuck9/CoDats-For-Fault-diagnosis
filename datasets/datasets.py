@@ -443,8 +443,12 @@ class Dataset:
 #2020 11.15 16:50 add cwru datasets
 @register_dataset("cwru")
 class cwru_data(Dataset):
-    users = ["12DriveEndFault","12FanEndFault","48DriveEndFault"]
+    users = ["12DriveEndFault","12FanEndFault","48DriveEndFault","12DriveEndFault_0.007","12DriveEndFault_0.014","12DriveEndFault_0.021",
+                            "12FanEndFault_0.007","12FanEndFault_0.014","12FanEndFault_0.021",
+                            "48DriveEndFault_0.007","48DriveEndFault_0.014","48DriveEndFault_0.021",
+        ]
     num_classes = 14
+    already_normalized = True
     feature_names = [
         "ch1"
     ]
