@@ -97,16 +97,39 @@ def valid_split(data, labels, seed=None, validation_size=1000):
 
     return x_valid, y_valid, x_train, y_train
 
+def getRandomIndex(n, x):
+	# 索引范围为[0, n)，随机选x个不重复，注意replace=False才是不重复，replace=True则有可能重复
+    index = np.random.choice(np.arange(n), size=x, replace=False)
+    return index
 
-def cwru_load(data_catogories):
-        data_name = data_catogories.split("_")[1]
-        _cwru= CWRU(data_name, '1797', 384)
+def cwru_load(data_catogories,isSubset = False):
+        if isSubset:
+            data_name= data_catogories.split("_")[1]
+            subset_size = data_catogories.split("_")[-1]
+            hz = data_catogories.split("_")[-2]
+        else:
+            data_name= data_catogories.split("_")[1]
+            hz = data_catogories.split("_")[-1]
+        _cwru= CWRU(data_name, hz, 384)
         X_train = np.array( _cwru.X_train,dtype=np.float32)
         X_test = np.array( _cwru.X_test,dtype=np.float32)
-        y_train = _cwru.y_train
-        y_test = _cwru.y_test
+        y_train = np.array(_cwru.y_train)
+        y_test = np.array(_cwru.y_test)
 
-        X_valid,  y_valid, X_train,  y_train = valid_split(X_train, y_train)
+        if isSubset:
+            train_size = int(subset_size)
+            total_size = int(train_size*1.25) # split training and valid with 8 : 2 proportion 
+            total_index = getRandomIndex(len(y_train),total_size)
+            train_index =total_index[:train_size]
+            valid_index = total_index[train_size:]
+            X_valid = X_train[valid_index]
+            y_valid = y_train[valid_index]
+            X_train = X_train[train_index]
+            y_train = y_train[train_index]           
+        else:
+            X_valid,  y_valid, X_train,  y_train = valid_split(X_train, y_train)
+
+       
 
         X_train_shape =  X_train.shape
         X_test_shape =  X_test.shape
@@ -217,7 +240,11 @@ def subdataset_split(original_dataset =None, feature = "Radius"):
                 subdataset_X_train_shape =subdataset_X_train.shape
                 subdataset_X_test_shape =  subdataset_X_test.shape
                 subdataset_X_valid_shape = subdataset_X_valid.shape
-
+                print(subdataset_name)
+                print( subdataset_X_train_shape)
+               
+                print(subdataset_X_valid_shape)
+                print(subdataset_X_test_shape)
                 # Apply the normalization to the training, validation, and testing data
                 subdataset_X_train = datasets.apply_normalization(subdataset_X_train, normalization)
                 subdataset_X_valid = datasets.apply_normalization(subdataset_X_valid, normalization)
@@ -241,7 +268,7 @@ def subdataset_split(original_dataset =None, feature = "Radius"):
         return
 
 
-def save_dataset(dataset_name, output_dir, seed=0):
+def save_dataset(dataset_name, output_dir, isSubset,seed=0):
     
     """ Save single dataset """
     train_filename = os.path.join(output_dir,
@@ -260,7 +287,7 @@ def save_dataset(dataset_name, output_dir, seed=0):
     print("Saving dataset", dataset_name)
 
     # dataset, dataset_class = datasets.load(dataset_name)
-    train_data,train_labels,valid_data,valid_labels,test_data,test_labels = cwru_load(dataset_name)
+    train_data,train_labels,valid_data,valid_labels,test_data,test_labels = cwru_load(dataset_name,isSubset)
     # # Skip if already normalized/bounded, e.g. UCI HAR datasets
     # # already_normalized = dataset_class.already_normalized
 
@@ -289,24 +316,32 @@ def save_dataset(dataset_name, output_dir, seed=0):
 
 def main():
     main_dataset = ["cwru"]
-    Transfer_dataset = ["12DriveEndFault","12FanEndFault","48DriveEndFault"]
+    # Transfer_dataset = ["12DriveEndFault","12FanEndFault","48DriveEndFault"]
+    Transfer_dataset = ["12DriveEndFault"]
+    Hez = ["1797","1772","1750","1730"]
+    sub_size = ["700","600","500","400","300","200","100"]
     output_dir = os.path.join("datasets", "tfrecords")
-
+    isSubset = True
     adaptation_problems = []
     for name in main_dataset:
         for user in Transfer_dataset:
-            adaptation_problems.append(name +"_"+str(user))
+            for hz in Hez:
+                if isSubset:
+                    for size in sub_size:
+                        adaptation_problems.append(name +"_"+str(user) +"_"+hz+"_"+size)
+                else:
+                        adaptation_problems.append(name +"_"+str(user) +"_"+hz)
 
     
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     for dataset_name in adaptation_problems:
-        save_dataset(dataset_name, output_dir)
+        save_dataset(dataset_name, output_dir,isSubset)
         
 
 
 
 if __name__ == "__main__":
-    # main()
-    subdataset_split()
+    main()
+    # subdataset_split()
