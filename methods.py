@@ -4,6 +4,7 @@ Methods
 import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
+import tensorflow_probability as tfp
 
 from absl import flags
 
@@ -407,6 +408,7 @@ class MethodBase:
         else:
             return losses_added
 
+
     #@tf.function  # faster not to compile
     def eval_step_list(self, data, is_target):
         """ Override preparation in prepare_data_eval() """
@@ -459,7 +461,6 @@ class MethodBase:
 
         return task_y_true_avg, task_y_pred_avg, domain_y_true_avg, \
             domain_y_pred_avg, losses_avg
-
 
 #
 # Homogeneous domain adaptation
@@ -796,12 +797,12 @@ class MethodDaws(MethodDann):
     def compute_losses(self, x, task_y_true, domain_y_true, task_y_pred,
             domain_y_pred, fe_output, which_model, training):
         # DANN losses
-        nontarget = tf.where(tf.not_equal(domain_y_true, 0))
+        nontarget = tf.where(tf.not_equal(domain_y_true, 0)) #先将源域的数据挑选出来
         task_y_true_nontarget = tf.gather(task_y_true, nontarget)
         task_y_pred_nontarget = tf.gather(task_y_pred, nontarget)
 
-        task_loss = self.task_loss(task_y_true_nontarget, task_y_pred_nontarget)
-        d_loss = self.domain_loss(domain_y_true, domain_y_pred)
+        task_loss = self.task_loss(task_y_true_nontarget, task_y_pred_nontarget) #用源域数据计算task loss
+        d_loss = self.domain_loss(domain_y_true, domain_y_pred) #用所有的数据计算domain loss
 
         # DA-WS regularizer
         #
@@ -811,8 +812,8 @@ class MethodDaws(MethodDann):
         # additional P(y) label proportion information. Thus, we use it and the
         # adversarial domain-invariant FE objectives as sort of auxiliary
         # losses.
-        target = tf.where(tf.equal(domain_y_true, 0))
-        task_y_pred_target = tf.gather(task_y_pred, target)
+        target = tf.where(tf.equal(domain_y_true, 0)) #再将目标域的数据挑选出来
+        task_y_pred_target = tf.gather(task_y_pred, target) 
 
         # Idea:
         # argmax, one-hot, reduce_sum(..., axis=1), /= batch_size, KL with p_y
@@ -837,6 +838,11 @@ class MethodDaws(MethodDann):
         p_y_batch = tf.reduce_sum(tf.nn.softmax(task_y_pred_target), axis=0) / batch_size
         daws_loss = tf.keras.losses.KLD(self.p_y, p_y_batch)
 
+        # 2020.12.16 16:35 
+        if tf.math.is_nan(daws_loss):
+            daws_loss   = tf.square(0.0)
+            # daws_loss .assign(0.0)
+
         # Sum up individual losses for the total
         #
         # Note: daws_loss doesn't have the DANN learning rate schedule because
@@ -855,6 +861,78 @@ class MethodDaws(MethodDann):
         # We only use daws_loss for plotting -- for computing gradients it's
         # included in the total loss
         return super().compute_gradients(tape, losses[:-1], which_model)
+
+
+#2020.12.17 16:26
+@register_method("damix")
+class MethodDaws(MethodDann):
+    """ Domain adaptation with mixup /mixmatch"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.loss_names += ["mixup"]
+        # self.compute_p_y()
+        # Used in loss
+        self.grl_schedule = models.DannGrlSchedule(self.total_steps)
+
+    def augment(self, x, l, beta=0.5):
+            # mix = tf.compat.v1.distributions.Beta(beta, beta).sample([tf.shape(x)[0], 1, 1, 1])
+            mix = tfp.distributions.Beta(beta, beta).sample([tf.shape(x)[0], 1, 1])
+            mix = tf.math.maximum(mix, 1 - mix)
+            xmix = x * mix + x[::-1] * (1 - mix)
+            lmix = l * mix[:, :, 0] + l[::-1] * (1 - mix[:, :, 0])
+            return xmix, lmix
+
+    def compute_p_y(self):
+
+        self.p_y = class_balance(self.target_train_eval_dataset, self.num_classes)
+
+    def get_logits_mix(self, x):
+            for i in range(self.ensemble_size):
+                # Run through model
+                task_y_pred, domain_y_pred, fe_output = self.call_model(x,
+                    which_model=i, is_target=False, training=False)
+            return task_y_pred, domain_y_pred, fe_output
+
+    def compute_losses(self, x, task_y_true, domain_y_true, task_y_pred,
+            domain_y_pred, fe_output, which_model, training):
+
+        # Mixup loss
+        x_mix, task_lx_mix_true = self.augment(x, tf.one_hot(tf.cast(task_y_true, tf.int32), self.num_classes)) #将源域和目标域混在一起做Mixup
+        task_lx_mix_pred, domain_lx_pred, fe_output_mix = self.get_logits_mix(x_mix) #将Mixup的结果送入模型得到输出
+        mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_lx_mix_true, task_lx_mix_pred))
+        # mix_task_loss = tf.square(0.0)
+        # DANN losses
+        nontarget = tf.where(tf.not_equal(domain_y_true, 0)) #先将源域的数据挑选出来
+        task_y_true_nontarget = tf.gather(task_y_true, nontarget)
+        task_y_pred_nontarget = tf.gather(task_y_pred, nontarget)
+
+
+        task_loss = self.task_loss(task_y_true_nontarget, task_y_pred_nontarget) #用源域数据计算task loss
+        d_loss = self.domain_loss(domain_y_true, domain_y_pred) #用所有的数据计算domain loss
+
+        # target = tf.where(tf.equal(domain_y_true, 0)) #再将目标域的数据挑选出来
+        # task_y_pred_target = tf.gather(task_y_pred, target) 
+
+
+        # batch_size = tf.cast(tf.shape(task_y_pred_target)[0], dtype=tf.float32)
+        # p_y_batch = tf.reduce_sum(tf.nn.softmax(task_y_pred_target), axis=0) / batch_size
+        # daws_loss = tf.keras.losses.KLD(self.p_y, p_y_batch)
+
+        # # 2020.12.16 16:35 
+        # if tf.math.is_nan(daws_loss):
+        #     daws_loss   = tf.square(0.0)
+        #     # daws_loss .assign(0.0)
+
+        total_loss = task_loss + d_loss +mix_task_loss
+        return [total_loss, task_loss, d_loss, mix_task_loss]
+
+    def compute_gradients(self, tape, losses, which_model):
+        # We only use daws_loss for plotting -- for computing gradients it's
+        # included in the total loss
+        return super().compute_gradients(tape, losses[:-1], which_model)
+
+
+
 
 
 #
