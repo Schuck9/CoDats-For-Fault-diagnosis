@@ -890,7 +890,7 @@ class MethodDaws(MethodDann):
             for i in range(self.ensemble_size):
                 # Run through model
                 task_y_pred, domain_y_pred, fe_output = self.call_model(x,
-                    which_model=i, is_target=False, training=False)
+                    which_model=i, is_target=False, training=True)
             return task_y_pred, domain_y_pred, fe_output
 
     def compute_losses(self, x, task_y_true, domain_y_true, task_y_pred,
