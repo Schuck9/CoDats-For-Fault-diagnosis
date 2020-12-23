@@ -320,7 +320,7 @@ class MethodBase:
         # evaluation metrics that much.
         return all_data_sources[0], all_data_target[0]
 
-    @tf.function
+    # @tf.function
     def _train_step(self, all_data_sources, all_data_target):
         """ The compiled part of train_step. We can't compile everything since
         some parts of the model need to know the shape of the data apparently.
@@ -886,32 +886,62 @@ class MethodDaws(MethodDann):
 
         self.p_y = class_balance(self.target_train_eval_dataset, self.num_classes)
 
-    def get_logits_mix(self, x):
+    def get_logits_mix(self, x,is_target = False):
             for i in range(self.ensemble_size):
                 # Run through model
                 task_y_pred, domain_y_pred, fe_output = self.call_model(x,
-                    which_model=i, is_target=False, training=True)
+                    which_model=i, is_target= is_target, training=False)
             return task_y_pred, domain_y_pred, fe_output
 
     def compute_losses(self, x, task_y_true, domain_y_true, task_y_pred,
             domain_y_pred, fe_output, which_model, training):
 
         # Mixup loss
-        x_mix, task_lx_mix_true = self.augment(x, tf.one_hot(tf.cast(task_y_true, tf.int32), self.num_classes)) #将源域和目标域混在一起做Mixup
-        task_lx_mix_pred, domain_lx_pred, fe_output_mix = self.get_logits_mix(x_mix) #将Mixup的结果送入模型得到输出
-        mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_lx_mix_true, task_lx_mix_pred))
+        # x_mix, task_lx_mix_true = self.augment(x, tf.one_hot(tf.cast(task_y_true, tf.int32), self.num_classes)) #将源域和目标域混在一起做Mixup
+        # task_lx_mix_pred, domain_lx_pred, fe_output_mix = self.get_logits_mix(x_mix) #将Mixup的结果送入模型得到输出
+        # mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_lx_mix_true, task_lx_mix_pred))
         # mix_task_loss = tf.square(0.0)
         # DANN losses
         nontarget = tf.where(tf.not_equal(domain_y_true, 0)) #先将源域的数据挑选出来
+        nontarget = tf.squeeze(nontarget)
+        x_source = tf.gather(x,nontarget,axis=0)
         task_y_true_nontarget = tf.gather(task_y_true, nontarget)
-        task_y_pred_nontarget = tf.gather(task_y_pred, nontarget)
+        task_y_pred_nontarget = tf.gather(task_y_pred, nontarget)       
 
+       
+        target = tf.where(tf.equal(domain_y_true, 0)) #再将目标域的数据挑选出来
+        target = tf.squeeze(target)
+        task_y_pred_target = tf.gather(task_y_pred, target)  #目标域的伪标签
+        # task_y_true_target = tf.gather(task_y_true, target)
+        x_target = tf.gather(x, target,axis=0)
+        #source_mix_task_loss
+        x_source_mix, task_ls_mix_true = self.augment(x_source, tf.one_hot(tf.cast(task_y_true_nontarget, tf.int32), self.num_classes)) 
+        task_ls_mix_pred, domain_ls_pred, fe_output_source_mix = self.get_logits_mix(x_source_mix,is_target=False) 
+        source_mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_ls_mix_true, task_ls_mix_pred))
+
+
+        #target_mix_task_loss
+        x_target_mix, task_lt_mix_true = self.augment(x_target, task_y_pred_target) 
+        task_lt_mix_pred, domain_lt_pred, fe_output_target_mix = self.get_logits_mix(x_target_mix,is_target = False) 
+        target_mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_lt_mix_true, task_lt_mix_pred))
+
+        # NaN check
+        if tf.math.is_nan(source_mix_task_loss):
+            source_mix_task_loss = tf.cast(0., tf.float32)
+        if tf.math.is_nan(target_mix_task_loss):
+            target_mix_task_loss = tf.cast(0., tf.float32)
+        source_mix_task_loss =  tf.clip_by_value(source_mix_task_loss,0,2)
+        target_mix_task_loss =  tf.clip_by_value(target_mix_task_loss,0,2)
+
+        weight_mix = tf.square(0.01)
+        mix_task_loss = source_mix_task_loss + target_mix_task_loss #增广后的数据集loss之和
+        mix_task_loss *= weight_mix
 
         task_loss = self.task_loss(task_y_true_nontarget, task_y_pred_nontarget) #用源域数据计算task loss
         d_loss = self.domain_loss(domain_y_true, domain_y_pred) #用所有的数据计算domain loss
+        
 
-        # target = tf.where(tf.equal(domain_y_true, 0)) #再将目标域的数据挑选出来
-        # task_y_pred_target = tf.gather(task_y_pred, target) 
+
 
 
         # batch_size = tf.cast(tf.shape(task_y_pred_target)[0], dtype=tf.float32)
