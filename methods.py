@@ -320,7 +320,7 @@ class MethodBase:
         # evaluation metrics that much.
         return all_data_sources[0], all_data_target[0]
 
-    # @tf.function
+    @tf.function
     def _train_step(self, all_data_sources, all_data_target):
         """ The compiled part of train_step. We can't compile everything since
         some parts of the model need to know the shape of the data apparently.
@@ -944,7 +944,7 @@ class MethodDaws(MethodDann):
         # Used in loss
         self.grl_schedule = models.DannGrlSchedule(self.total_steps)
 
-    def augment(self, x, l, beta=0.75):
+    def augment(self, x, l, beta=0.5):
         # mix = tf.compat.v1.distributions.Beta(beta, beta).sample([tf.shape(x)[0], 1, 1, 1])
         mix = tfp.distributions.Beta(beta, beta).sample([tf.shape(x)[0], 1, 1])
         mix = tf.math.maximum(mix, 1 - mix)
@@ -987,7 +987,7 @@ class MethodDaws(MethodDann):
         x_mix, task_lx_mix_true = self.augment(x, task_y_true, self.num_classes) 
         task_lx_mix_pred, domain_lx_pred, fe_output_mix = self.get_logits_mix(x_mix) 
         mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_lx_mix_true, task_lx_mix_pred))
-        mix_weight = tf.square(0.1)
+        mix_weight = tf.square(0.01)
         mix_task_loss *= mix_weight 
 
        # Weak loss
@@ -995,6 +995,8 @@ class MethodDaws(MethodDann):
         batch_size = tf.cast(tf.shape(task_y_pred_target)[0], dtype=tf.float32)
         p_y_batch = tf.reduce_sum(tf.nn.softmax(task_y_pred_target), axis=0) / batch_size
         daws_loss = tf.squeeze( tf.keras.losses.KLD(self.p_y, p_y_batch))
+        daws_weight = tf.square(0.1)
+        daws_loss*= daws_weight
 
         # # 2020.12.16 16:35 
         if tf.math.is_nan(daws_loss):
@@ -1008,6 +1010,77 @@ class MethodDaws(MethodDann):
         # We only use daws_loss for plotting -- for computing gradients it's
         # included in the total loss
         return super().compute_gradients(tape, losses[:-2], which_model)
+
+
+#2020.1.7 22:44
+@register_method("wsmix_np")
+class MethodDaws(MethodDann):
+    """ Domain adaptation with mixup /mixmatch"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.loss_names += ["weak","mixup"]
+        self.compute_p_y()
+        # Used in loss
+        self.grl_schedule = models.DannGrlSchedule(self.total_steps)
+
+    def augment(self, x, l, beta=0.5):
+        # mix = tf.compat.v1.distributions.Beta(beta, beta).sample([tf.shape(x)[0], 1, 1, 1])
+        mix = tfp.distributions.Beta(beta, beta).sample([tf.shape(x)[0], 1, 1])
+        mix = tf.math.maximum(mix, 1 - mix)
+        xmix = x * mix + x[::-1] * (1 - mix)
+        lmix = l * mix[:, :, 0] + l[::-1] * (1 - mix[:, :, 0])
+        return xmix, lmix
+
+    def compute_p_y(self):
+
+        self.p_y = class_balance(self.target_train_eval_dataset, self.num_classes)
+
+    def get_logits_mix(self, x):
+        for i in range(self.ensemble_size):
+            # Run through model
+            task_y_pred, domain_y_pred, fe_output = self.call_model(x,
+                which_model=i, is_target=False, training=True)
+        return task_y_pred, domain_y_pred, fe_output
+
+    def compute_losses(self, x, task_y_true, domain_y_true, task_y_pred,
+            domain_y_pred, fe_output, which_model, training):
+
+        # Mixup loss
+        x_mix, task_lx_mix_true = self.augment(x, tf.one_hot(tf.cast(task_y_true, tf.int32), self.num_classes)) 
+        task_lx_mix_pred, domain_lx_pred, fe_output_mix = self.get_logits_mix(x_mix) 
+        mix_task_loss=  tf.reduce_mean(tf.keras.losses.categorical_crossentropy(task_lx_mix_true, task_lx_mix_pred))
+        # mix_task_loss = tf.square(0.0)
+        # DANN losses
+        nontarget = tf.where(tf.not_equal(domain_y_true, 0)) 
+        task_y_true_nontarget = tf.gather(task_y_true, nontarget)
+        task_y_pred_nontarget = tf.gather(task_y_pred, nontarget)
+
+
+        task_loss = self.task_loss(task_y_true_nontarget, task_y_pred_nontarget) 
+        d_loss = self.domain_loss(domain_y_true, domain_y_pred) 
+
+        # Daws loss
+        target = tf.where(tf.equal(domain_y_true, 0)) 
+        task_y_pred_target = tf.gather(task_y_pred, target) 
+
+
+        batch_size = tf.cast(tf.shape(task_y_pred_target)[0], dtype=tf.float32)
+        p_y_batch = tf.reduce_sum(tf.nn.softmax(task_y_pred_target), axis=0) / batch_size
+        daws_loss = tf.keras.losses.KLD(self.p_y, p_y_batch)
+
+        # 2020.12.16 16:35 
+        if tf.math.is_nan(daws_loss):
+            daws_loss   = tf.square(0.0)
+            # daws_loss .assign(0.0)
+        mix_weight = tf.square(0.01)
+        total_loss = task_loss + d_loss + daws_loss+ mix_weight*mix_task_loss
+        return [total_loss, task_loss, d_loss, daws_loss,mix_task_loss]
+    def compute_gradients(self, tape, losses, which_model):
+        # We only use daws_loss for plotting -- for computing gradients it's
+        # included in the total loss
+        return super().compute_gradients(tape, losses[:-2], which_model)
+
+
 
 
 #
