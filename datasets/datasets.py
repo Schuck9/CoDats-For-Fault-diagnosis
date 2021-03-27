@@ -19,7 +19,8 @@ from sklearn.model_selection import train_test_split
 from absl import app
 from absl import flags
 
-from cwru import CWRU
+# from cwru import CWRU
+# from SEU import Md
 # from normalization import calc_normalization, calc_normalization_jagged, \
 #     apply_normalization, apply_normalization_jagged
 
@@ -443,48 +444,62 @@ class Dataset:
 #2020 11.15 16:50 add cwru datasets
 @register_dataset("cwru")
 class cwru_data(Dataset):
-    users = ["12DriveEndFault","12FanEndFault","48DriveEndFault","12DriveEndFault_0.007","12DriveEndFault_0.014","12DriveEndFault_0.021",
-                            "12FanEndFault_0.007","12FanEndFault_0.014","12FanEndFault_0.021",
-                            "48DriveEndFault_0.007","48DriveEndFault_0.014","48DriveEndFault_0.021",
+    users = ["12DriveEndFault","12FanEndFault","48DriveEndFault","12DriveEndFault_0.007","12DriveEndFault_0.014",
+              "12DriveEndFault_0.021","12FanEndFault_0.007","12FanEndFault_0.014","12FanEndFault_0.021",
+              "48DriveEndFault_0.007","48DriveEndFault_0.014","48DriveEndFault_0.021",
+              '12DriveEndFault_1797_700', '12DriveEndFault_1797_600', '12DriveEndFault_1797_500', 
+              '12DriveEndFault_1797_400', '12DriveEndFault_1797_300', '12DriveEndFault_1797_200', 
+              '12DriveEndFault_1797_100', '12DriveEndFault_1772_700', '12DriveEndFault_1772_600', 
+              '12DriveEndFault_1772_500', '12DriveEndFault_1772_400', '12DriveEndFault_1772_300', 
+              '12DriveEndFault_1772_200', '12DriveEndFault_1772_100', '12DriveEndFault_1750_700', 
+              '12DriveEndFault_1750_600', '12DriveEndFault_1750_500', '12DriveEndFault_1750_400', 
+              '12DriveEndFault_1750_300', '12DriveEndFault_1750_200', '12DriveEndFault_1750_100', 
+              '12DriveEndFault_1730_700', '12DriveEndFault_1730_600', '12DriveEndFault_1730_500', 
+              '12DriveEndFault_1730_400', '12DriveEndFault_1730_300', '12DriveEndFault_1730_200', 
+              '12DriveEndFault_1730_100','12DriveEndFault_1797', 
+              '12DriveEndFault_1772', '12DriveEndFault_1750','12DriveEndFault_1730',
+
         ]
-    num_classes = 14
+    num_classes = 16
     already_normalized = True
     feature_names = [
         "ch1"
     ]
-    class_labels =['0.007-Ball',
-            '0.007-InnerRace',
-            '0.007-OuterRace12',
-            '0.007-OuterRace3',
-            '0.007-OuterRace6',
-            '0.014-Ball',
-            '0.014-InnerRace',
-            '0.014-OuterRace6',
-            '0.021-Ball',
-            '0.021-InnerRace',
-            '0.021-OuterRace12',
-            '0.021-OuterRace3',
-            '0.021-OuterRace6',
-            'Normal'
-    ]
+    
     # class_labels =['0.007-Ball',
-    #             '0.007-InnerRace',
-    #             '0.007-OuterRace12',
-    #             '0.007-OuterRace3',
-    #             '0.007-OuterRace6',
-    #             '0.014-Ball',
-    #             '0.014-InnerRace',
-    #             '0.014-OuterRace6',
-    #             '0.021-Ball',
-    #             '0.021-InnerRace',
-    #             '0.021-OuterRace12',
-    #             '0.021-OuterRace3',
-    #             '0.021-OuterRace6',
-    #             '0.028-Ball',
-    #             '0.028-InnerRace',
-    #             'Normal'
+    #         '0.007-InnerRace',
+    #         '0.007-OuterRace12',
+    #         '0.007-OuterRace3',
+    #         '0.007-OuterRace6',
+    #         '0.014-Ball',
+    #         '0.014-InnerRace',
+    #         '0.014-OuterRace6',
+    #         '0.021-Ball',
+    #         '0.021-InnerRace',
+    #         '0.021-OuterRace12',
+    #         '0.021-OuterRace3',
+    #         '0.021-OuterRace6',
+    #         'Normal'
     # ]
-    window_size = 30
+    
+    class_labels = ['0.007-Ball',
+                '0.007-InnerRace',
+                '0.007-OuterRace12',
+                '0.007-OuterRace3',
+                '0.007-OuterRace6',
+                '0.014-Ball',
+                '0.014-InnerRace',
+                '0.014-OuterRace6',
+                '0.021-Ball',
+                '0.021-InnerRace',
+                '0.021-OuterRace12',
+                '0.021-OuterRace3',
+                '0.021-OuterRace6',
+                '0.028-Ball',
+                '0.028-InnerRace',
+                'Normal'
+    ]
+    window_size = 64
     window_overlap = False
     # users = one_to_n(30)  # 30 people
     def __init__(self, users,*args, **kwargs):
@@ -505,6 +520,49 @@ class cwru_data(Dataset):
         self._cwru.y_train = np.squeeze(np.array(self._cwru.y_train, dtype=np.float32))
         self._cwru.y_test = np.squeeze(np.array(self._cwru.y_test, dtype=np.float32))
         return self._cwru.X_train, self._cwru.y_train, self._cwru.X_test, self._cwru.y_test
+
+
+
+#2021 3.27 10:20 add seu datasets
+@register_dataset("seu")
+class seu_data(Dataset):
+    users = [
+            "0","1"
+        ]
+    num_classes = 9
+    already_normalized = True
+    feature_names = [
+        "ch1"
+    ]
+    
+    
+    class_labels = ['health',
+                'bearingset_ball',
+                'bearingset_outer',
+                'bearingset_inner',
+                'bearingset_comb',
+                'gearset_chipped',
+                'gearset_miss',
+                'gearset_surface',
+                'gearset_root',
+    ]
+    window_size = 64
+    window_overlap = False
+    # users = one_to_n(30)  # 30 people
+    def __init__(self, users,*args, **kwargs):
+        self.users = one_to_n(9)
+        super().__init__(seu_data.num_classes, seu_data.class_labels,
+            None, None, seu_data.feature_names,*args, **kwargs)
+
+    def load(self):
+        npy_data = "datasets\datasets\\tfrecords\seu_data.npy"
+        new_all_data = np.load(npy_data,allow_pickle=True)
+        source_train_X,source_train_y = new_all_data[0]
+        source_val_X,source_val_y  = new_all_data[1]
+        target_train_X,target_train_y = new_all_data[2]
+        target_val_X,target_val_y = new_all_data[3]
+        return None
+
 
 
 @register_dataset("ucihar")
