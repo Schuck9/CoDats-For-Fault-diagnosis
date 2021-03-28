@@ -522,6 +522,35 @@ class cwru_data(Dataset):
         return self._cwru.X_train, self._cwru.y_train, self._cwru.X_test, self._cwru.y_test
 
 
+#2021 3.27 10:20 add JNU datasets
+@register_dataset("jnu")
+class jnu_data(Dataset):
+    users = [
+            "0","1","2"
+        ]
+    num_classes = 4
+    already_normalized = True
+    feature_names = [
+        "ch1"
+    ]
+    
+    
+    class_labels = ['Inner ring',
+                'Normal state',
+                'Outer ring',
+                'Rolling element',
+    ]
+    window_size = 64
+    window_overlap = False
+    # users = one_to_n(30)  # 30 people
+    def __init__(self, users,*args, **kwargs):
+        self.users = one_to_n(3)
+        super().__init__(jnu_data.num_classes, jnu_data.class_labels,
+            None, None, jnu_data.feature_names,*args, **kwargs)
+
+    def load(self):
+        return None
+
 
 #2021 3.27 10:20 add seu datasets
 @register_dataset("seu")
