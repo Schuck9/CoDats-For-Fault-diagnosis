@@ -522,6 +522,56 @@ class cwru_data(Dataset):
         return self._cwru.X_train, self._cwru.y_train, self._cwru.X_test, self._cwru.y_test
 
 
+
+@register_dataset("cwru10C")
+class cwru10C_data(Dataset):
+    users = ["12DriveEndFault","12FanEndFault","48DriveEndFault","12DriveEndFault_0.007","12DriveEndFault_0.014",
+              "12DriveEndFault_0.021","12FanEndFault_0.007","12FanEndFault_0.014","12FanEndFault_0.021",
+              "48DriveEndFault_0.007","48DriveEndFault_0.014","48DriveEndFault_0.021",
+              '12DriveEndFault_1797_700', '12DriveEndFault_1797_600', '12DriveEndFault_1797_500', 
+              '12DriveEndFault_1797_400', '12DriveEndFault_1797_300', '12DriveEndFault_1797_200', 
+              '12DriveEndFault_1797_100', '12DriveEndFault_1772_700', '12DriveEndFault_1772_600', 
+              '12DriveEndFault_1772_500', '12DriveEndFault_1772_400', '12DriveEndFault_1772_300', 
+              '12DriveEndFault_1772_200', '12DriveEndFault_1772_100', '12DriveEndFault_1750_700', 
+              '12DriveEndFault_1750_600', '12DriveEndFault_1750_500', '12DriveEndFault_1750_400', 
+              '12DriveEndFault_1750_300', '12DriveEndFault_1750_200', '12DriveEndFault_1750_100', 
+              '12DriveEndFault_1730_700', '12DriveEndFault_1730_600', '12DriveEndFault_1730_500', 
+              '12DriveEndFault_1730_400', '12DriveEndFault_1730_300', '12DriveEndFault_1730_200', 
+              '12DriveEndFault_1730_100',
+              '12DriveEndFault_1797', '12DriveEndFault_1772', '12DriveEndFault_1750','12DriveEndFault_1730',
+              '12FanEndFault_1772', '12FanEndFault_1750','12FanEndFault_1730','12FanEndFault_1797',
+              '48DriveEndFault_1797', '48DriveEndFault_1772', '48DriveEndFault_1750','48DriveEndFault_1730',
+        ]
+    num_classes = 10
+    already_normalized = True
+    feature_names = [
+        "ch1"
+    ]
+    
+    class_labels =[
+        '0.007-Ball',
+        '0.007-InnerRace',
+        '0.007-OuterRace3',
+        '0.014-Ball',
+        '0.014-InnerRace',
+        '0.014-OuterRace6',
+        '0.021-Ball',
+        '0.021-InnerRace',
+        '0.021-OuterRace3',
+        'Normal'
+        ]
+    window_size = 64
+    window_overlap = False
+    # users = one_to_n(30)  # 30 people
+    def __init__(self, users,*args, **kwargs):
+        self.users = one_to_n(30)
+        super().__init__(cwru10C_data.num_classes, cwru10C_data.class_labels,
+            None, None, cwru10C_data.feature_names,*args, **kwargs)
+
+    def load(self):
+        print("There is no codes!")
+        return None
+
 #2021 3.27 10:20 add JNU datasets
 @register_dataset("jnu")
 class jnu_data(Dataset):
