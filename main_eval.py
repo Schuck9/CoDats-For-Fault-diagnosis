@@ -29,13 +29,13 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("modeldir", "models", "Directory for saving model files")
 flags.DEFINE_string("logdir", "logs", "Directory for saving log files")
 # Specific for evaluation
-flags.DEFINE_string("output_file", None, "Output filename to write the yaml file with the results")
-flags.DEFINE_float("gpumem", 8140, "GPU memory to let TensorFlow use, in MiB (0 for all, divided among jobs)")
-flags.DEFINE_string("match", "*-*-*", "String matching to determine which logs/models to process")
-flags.DEFINE_integer("jobs", 4, "Number of TensorFlow jobs to run at once")
+flags.DEFINE_string("output_file", "results/results_best_target-jnu-347.yaml", "Output filename to write the yaml file with the results")
+flags.DEFINE_float("gpumem", 1024, "GPU memory to let TensorFlow use, in MiB (0 for all, divided among jobs)")
+flags.DEFINE_string("match", "jnu-347-wsmix_np-[0-9]*", "String matching to determine which logs/models to process")
+flags.DEFINE_integer("jobs", 1, "Number of TensorFlow jobs to run at once")
 flags.DEFINE_integer("gpus", 1, "Split jobs between GPUs -- overrides jobs (1 == run multiple jobs on first GPU)")
-flags.DEFINE_enum("selection", "best_source", ["last", "best_source", "best_target"], "Which model to select")
-flags.DEFINE_boolean("test", True, "Whether to evaluate on the true test set or if --notest, then the validation set")
+flags.DEFINE_enum("selection", "best_target", ["last", "best_source", "best_target"], "Which model to select")
+flags.DEFINE_boolean("test", False, "Whether to evaluate on the true test set or if --notest, then the validation set")
 
 flags.mark_flag_as_required("output_file")
 

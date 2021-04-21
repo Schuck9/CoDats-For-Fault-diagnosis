@@ -15,8 +15,8 @@ from class_balance import class_balance
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_float("lr", 0.0001, "Learning rate for training")
-flags.DEFINE_float("lr_domain_mult", 1.0, "Learning rate multiplier for training domain classifier")
+flags.DEFINE_float("lr", 0.00001*0.5, "Learning rate for training")
+flags.DEFINE_float("lr_domain_mult", 2.5, "Learning rate multiplier for training domain classifier")
 flags.DEFINE_float("hda_l2", 1000.0, "Weight for regularizing each domain's feature extractor weights to be similar")
 flags.DEFINE_boolean("hda_by_layer", False, "Regularize lower layers less and higher layers more, only matters if hda_l2 != 0")
 flags.DEFINE_boolean("ensemble_same_data", False, "Train each model on the same batch of data, or if false use a different random batch for each model")
@@ -1066,8 +1066,11 @@ class MethodDaws(MethodDann):
 
         batch_size = tf.cast(tf.shape(task_y_pred_target)[0], dtype=tf.float32)
         p_y_batch = tf.reduce_sum(tf.nn.softmax(task_y_pred_target), axis=0) / batch_size
-        daws_loss = tf.keras.losses.KLD(self.p_y, p_y_batch)
-
+        #KL_divergence
+        # daws_loss = tf.keras.losses.KLD(self.p_y, p_y_batch)
+        #JS_divergence
+        JS_div = 0.5*tf.keras.losses.KLD(self.p_y, 0.5*(self.p_y+p_y_batch))+0.5*tf.keras.losses.KLD(p_y_batch,0.5*(self.p_y+p_y_batch))
+        daws_loss = tf.squeeze(JS_div)
         # 2020.12.16 16:35 
         if tf.math.is_nan(daws_loss):
             daws_loss   = tf.square(0.0)

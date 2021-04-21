@@ -33,11 +33,11 @@ flags.DEFINE_string("sources", "1", "Which source domains to use (e.g. \"1,2,3\"
 flags.DEFINE_string("target", "2", "What target domain to use (e.g. \"4\", can be blank for no target)")
 flags.DEFINE_string("uid", "1", "A unique ID saved in the log/model folder names to avoid conflicts")
 flags.DEFINE_integer("ensemble", 1, "Number of models in the ensemble, 1 = no ensemble")
-flags.DEFINE_integer("steps", 30000, "Number of training steps to run")
+flags.DEFINE_integer("steps", 500000, "Number of training steps to run")
 flags.DEFINE_float("gpumem", 0, "GPU memory to let TensorFlow use, in MiB (0 for all)")
 flags.DEFINE_integer("model_steps", 0, "Save the model every so many steps (0 for only when log_val_steps)")
 flags.DEFINE_integer("log_train_steps", 500, "Log training information every so many steps (0 for never)")
-flags.DEFINE_integer("log_val_steps", 4000, "Log validation information every so many steps (also saves model, 0 for only at end)")
+flags.DEFINE_integer("log_val_steps", 500, "Log validation information every so many steps (also saves model, 0 for only at end)")
 flags.DEFINE_integer("log_plots_steps", 0, "Log plots every so many steps (0 for never)")
 flags.DEFINE_boolean("test", False, "Use real test set for evaluation rather than validation set")
 flags.DEFINE_boolean("subdir", True, "Save models/logs in subdirectory of prefix")
@@ -46,11 +46,14 @@ flags.DEFINE_boolean("time_training", False, "Print how long each step takes, in
 flags.DEFINE_boolean("moving_average", False, "Whether to use an exponential moving average of the weights rather than the weights directly (requires tensorflow_addons)")
 flags.DEFINE_boolean("share_most_weights", False, "Instead of regularizing weights in heterogeneous domain adaptation, share same-shape weights")
 flags.DEFINE_integer("debugnum", 0, "Specify exact log/model/images number to use rather than incrementing from last. (Don't pass both this and --debug at the same time.)")
+flags.DEFINE_string("gpu_index", "0", "Which gpu to use (e.g. \"1,2,3\")")
 
 flags.mark_flag_as_required("method")
 flags.mark_flag_as_required("dataset")
 flags.mark_flag_as_required("sources")
 flags.mark_flag_as_required("uid")
+
+
 
 
 def get_directory_names():
@@ -88,6 +91,7 @@ def get_directory_names():
 
 def main(argv):
     # Allow running multiple at once
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu_index
     set_gpu_memory(FLAGS.gpumem)
 
     # Figure out the log and model directory filenames

@@ -12,7 +12,7 @@ from datasets.tfrecord import tfrecord_filename
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_integer("train_batch", 8, "Batch size for training")
+flags.DEFINE_integer("train_batch", 128, "Batch size for training")
 flags.DEFINE_integer("eval_batch", 2048, "Batch size for evaluation")
 flags.DEFINE_enum("batch_division", "all", ["none", "sources", "all"], "Batch size options (e.g. 32): none - 32 for each source and target; sources - 32/n for n sources, 32 for target; all - 32/(n+1) for n sources and 1 target")
 flags.DEFINE_integer("shuffle_buffer", 60000, "Dataset shuffle buffer size")

@@ -19,7 +19,7 @@ Usage:
 """
 import os
 import tensorflow as tf
-
+import numpy as np
 from absl import flags
 
 from file_utils import get_best_valid, write_best_valid, \
@@ -28,7 +28,7 @@ from file_utils import get_best_valid, write_best_valid, \
 FLAGS = flags.FLAGS
 
 flags.DEFINE_integer("latest_checkpoints", 1, "Max number of latest checkpoints to keep")
-flags.DEFINE_integer("best_checkpoints", 1, "Max number of best checkpoints to keep")
+flags.DEFINE_integer("best_checkpoints", 5, "Max number of best checkpoints to keep")
 
 
 class CheckpointManager:
@@ -41,6 +41,10 @@ class CheckpointManager:
     def __init__(self, checkpoint, model_dir, log_dir):
         self.checkpoint = checkpoint
         self.log_dir = log_dir
+        self.average_sd=[]
+        self.average_td=[]
+        self.asd = 0.0
+        self.atd = 0.0
 
         # Keep track of the latest for restoring interrupted training
         self.latest_manager = tf.train.CheckpointManager(
@@ -131,21 +135,26 @@ class CheckpointManager:
         # Always save the latest
         self.latest_manager.save(checkpoint_number=step)
 
+        if step > 30000:
+            self.average_sd.append(validation_accuracy_source)
+            self.average_td.append(validation_accuracy_target)
+            sd_mean_std= (np.mean(self.average_sd),np.std(self.average_sd))
+            td_mean_std = (np.mean(self.average_td),np.std(self.average_td))
+            ms = [sd_mean_std,td_mean_std]
+            write_best_valid(self.log_dir,
+                    ms,
+                    filename="mean_and_std.txt")
         # Only save the "best" if it's better than the previous best
-        if validation_accuracy_source is not None:
-            if validation_accuracy_source > self.best_validation_source \
-                    or not self.found_best_source:
-                self.best_manager_source.save(checkpoint_number=step)
-                self.best_validation_source = validation_accuracy_source
-                write_best_valid(self.log_dir,
-                    self.best_validation_source,
-                    filename="best_valid_accuracy_source.txt")
-
-        if validation_accuracy_target is not None:
-            if validation_accuracy_target > self.best_validation_target \
-                    or not self.found_best_target:
+        if validation_accuracy_source is not None and validation_accuracy_target is not None: 
+            if validation_accuracy_target > self.best_validation_target:
                 self.best_manager_target.save(checkpoint_number=step)
                 self.best_validation_target = validation_accuracy_target
                 write_best_valid(self.log_dir,
                     self.best_validation_target,
                     filename="best_valid_accuracy_target.txt")
+                    
+                self.best_manager_source.save(checkpoint_number=step)
+                self.best_validation_source = validation_accuracy_source
+                write_best_valid(self.log_dir,
+                    self.best_validation_source,
+                    filename="best_valid_accuracy_source.txt")

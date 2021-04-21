@@ -1,0 +1,44 @@
+/gs/home/mzh1996/anaconda/envs/mty_env/lib/python3.7/site-packages/absl/flags/_validators.py:356: UserWarning: Flag --method has a non-None default value; therefore, mark_flag_as_required will pass even if flag is not specified in the command line!
+  'command line!' % flag_name)
+/gs/home/mzh1996/anaconda/envs/mty_env/lib/python3.7/site-packages/absl/flags/_validators.py:356: UserWarning: Flag --dataset has a non-None default value; therefore, mark_flag_as_required will pass even if flag is not specified in the command line!
+  'command line!' % flag_name)
+/gs/home/mzh1996/anaconda/envs/mty_env/lib/python3.7/site-packages/absl/flags/_validators.py:356: UserWarning: Flag --sources has a non-None default value; therefore, mark_flag_as_required will pass even if flag is not specified in the command line!
+  'command line!' % flag_name)
+/gs/home/mzh1996/anaconda/envs/mty_env/lib/python3.7/site-packages/absl/flags/_validators.py:356: UserWarning: Flag --uid has a non-None default value; therefore, mark_flag_as_required will pass even if flag is not specified in the command line!
+  'command line!' % flag_name)
+2020-11-20 22:45:17.237496: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+2020-11-20 22:45:17.346027: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1561] Found device 0 with properties: 
+pciBusID: 0000:be:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-11-20 22:45:17.383261: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.1
+2020-11-20 22:45:17.732051: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10
+2020-11-20 22:45:17.995296: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10
+2020-11-20 22:45:18.084741: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10
+2020-11-20 22:45:18.277314: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10
+2020-11-20 22:45:18.591749: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10
+2020-11-20 22:45:18.941783: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2020-11-20 22:45:18.952136: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1703] Adding visible gpu devices: 0
+2020-11-20 22:45:18.954135: I tensorflow/core/platform/cpu_feature_guard.cc:143] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 AVX512F FMA
+2020-11-20 22:45:18.970407: I tensorflow/core/platform/profile_utils/cpu_utils.cc:102] CPU Frequency: 2600000000 Hz
+2020-11-20 22:45:18.971519: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x560523f05ee0 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2020-11-20 22:45:18.971605: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2020-11-20 22:45:18.981370: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1561] Found device 0 with properties: 
+pciBusID: 0000:be:00.0 name: Tesla V100-SXM2-32GB computeCapability: 7.0
+coreClock: 1.53GHz coreCount: 80 deviceMemorySize: 31.72GiB deviceMemoryBandwidth: 836.37GiB/s
+2020-11-20 22:45:18.981466: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.1
+2020-11-20 22:45:18.981502: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10
+2020-11-20 22:45:18.981534: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10
+2020-11-20 22:45:18.985780: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10
+2020-11-20 22:45:18.985814: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10
+2020-11-20 22:45:18.985845: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10
+2020-11-20 22:45:18.985876: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2020-11-20 22:45:18.995219: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1703] Adding visible gpu devices: 0
+2020-11-20 22:45:18.995372: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.1
+2020-11-20 22:45:19.181964: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1102] Device interconnect StreamExecutor with strength 1 edge matrix:
+2020-11-20 22:45:19.182023: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1108]      0 
+2020-11-20 22:45:19.182071: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1121] 0:   N 
+2020-11-20 22:45:19.191308: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1247] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 30234 MB memory) -> physical GPU (device: 0, name: Tesla V100-SXM2-32GB, pci bus id: 0000:be:00.0, compute capability: 7.0)
+2020-11-20 22:45:19.194419: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x5605249ac570 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2020-11-20 22:45:19.194454: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Tesla V100-SXM2-32GB, Compute Capability 7.0
+2020-11-20 22:45:30.046089: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10
+2020-11-20 22:45:30.472910: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
