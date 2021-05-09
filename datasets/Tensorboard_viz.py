@@ -37,6 +37,7 @@ def get_loss_from_tfevent_file(tfevent_filename,tag_list):
                     # print(value.simple_value)
                     arr = float(tensor_util.MakeNdarray(value.tensor))
                     loss_val_list.append(arr)
+        loss_val_list[0]=0.0
         loss_val_list = smooth(loss_val_list,0.6)
         val_dict[metric_tag]= loss_val_list
     return val_dict
@@ -83,7 +84,7 @@ def viz(data,metric_tag,task_name):
         # plt.plot(x_axis, data[3][i]  , linestyle= 'dashdot',marker = "+",color='coral', label=methode_name[3])
         # plt.plot(x_axis, data[index_name[0]][metric_tag[i]] , linestyle= 'dashdot',color='royalblue', label=method_name[0])
         # plt.plot(x_axis, data[index_name[1]][metric_tag[i]]   , linestyle=  'dashdot',color='tomato', label=method_name[1])
-        # plt.plot(x_axis, data[index_name[2]][metric_tag[i]]  , linestyle= 'dashdot',color='seagreen', label=method_name[2])
+        # plt.plot(x_axis, data[index_name[2]][metric_tag[i]]  , linestyle= 'dashdot',color='gold', label=method_name[2])
         plt.plot(x_axis, data[index_name[3]][metric_tag[i]]  , linestyle= 'dashdot',color='black', label=method_name[3])
         # plt.xticks(x_axis)
 
@@ -94,7 +95,7 @@ def viz(data,metric_tag,task_name):
 
 
 if __name__=="__main__":
-    task_name = "J0-J1"
+    task_name = "J1-J0"
     start_uid = 2016
     datasets = ["jnu","cwru"]
     method_name = ["damix","wsmix_np","daws","dann"]
